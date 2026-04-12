@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Operações ES — 0 DTE</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e17;--surface:#111827;--surface2:#1a2234;--border:#1e2d45;
+    --accent:#00d4ff;--accent2:#00ff88;--warn:#ffb347;--text:#e8f0fe;
+    --text2:#8899bb;--text3:#445577;--green:#00c97a;--red:#ff3d5a;--orange:#ff8c00;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .app{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:24px 16px 60px;}
+  .header{text-align:center;padding:36px 0 28px;}
+  .badge{display:inline-block;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;padding:5px 14px;border-radius:20px;margin-bottom:14px;}
+  .header h1{font-size:clamp(22px,4vw,38px);font-weight:700;background:linear-gradient(135deg,#00d4ff,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .header p{color:var(--text2);margin-top:6px;font-size:13px;}
+  .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:22px;}
+  .tab{flex:1;padding:9px;border:none;border-radius:8px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+  .tab.active{background:var(--surface2);color:var(--accent);border:1px solid rgba(0,212,255,0.2);}
+  .tab-content{display:none;}.tab-content.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:14px;}
+  .card-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .card-title::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+  .field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Space Mono',monospace;font-size:17px;font-weight:700;transition:all 0.2s;outline:none;}
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1);}
+  .field .hint{font-size:11px;color:var(--text3);margin-top:3px;}
+  .fields-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .result-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+  .result-box .rl{font-size:11px;color:var(--text2);margin-bottom:5px;}
+  .result-box .rv{font-family:'Space Mono',monospace;font-size:19px;font-weight:700;}
+  .result-box.green{border-color:rgba(0,201,122,0.3);background:rgba(0,201,122,0.05);}
+  .result-box.green .rv{color:var(--green);}
+  .result-box.red{border-color:rgba(255,61,90,0.3);background:rgba(255,61,90,0.05);}
+  .result-box.red .rv{color:var(--red);}
+  .result-box.blue{border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.05);}
+  .result-box.blue .rv{color:var(--accent);}
+  .ir{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .ir .il{font-size:12px;color:var(--text2);}
+  .ir .iv{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--accent2);}
+  .sr{background:rgba(255,61,90,0.08);border:1px solid rgba(255,61,90,0.3);border-radius:12px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .sr .il{font-size:12px;color:#ff8099;}
+  .sr .iv{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--red);}
+  .wr{background:rgba(255,179,71,0.08);border:1px solid rgba(255,179,71,0.25);border-radius:12px;padding:13px 16px;margin-bottom:10px;font-size:12px;color:var(--warn);line-height:1.6;}
+  .gr{background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:12px;padding:13px 16px;margin-bottom:10px;font-size:12px;color:#00cc77;line-height:1.6;}
+  .ci{display:flex;align-items:flex-start;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all 0.2s;margin-bottom:8px;}
+  .ci:hover{border-color:rgba(0,212,255,0.2);}
+  .ci.checked{border-color:rgba(0,201,122,0.4);background:rgba(0,201,122,0.05);}
+  .cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:12px;transition:all 0.2s;}
+  .ci.checked .cb{background:var(--green);border-color:var(--green);}
+  .ct{flex:1;}
+  .ct .ctt{font-size:13px;font-weight:500;margin-bottom:2px;}
+  .ct .cts{font-size:11px;color:var(--text3);line-height:1.5;}
+  .cr{margin-top:12px;padding:14px;border-radius:12px;text-align:center;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+  .cr.ok{background:rgba(0,201,122,0.15);color:var(--green);border:1px solid rgba(0,201,122,0.3);}
+  .cr.nok{background:rgba(255,61,90,0.1);color:var(--red);border:1px solid rgba(255,61,90,0.3);}
+  .cr.partial{background:rgba(255,179,71,0.1);color:var(--warn);border:1px solid rgba(255,179,71,0.3);}
+  .pd{background:linear-gradient(135deg,rgba(0,201,122,0.15),rgba(0,212,255,0.08));border:1px solid rgba(0,201,122,0.3);border-radius:16px;padding:26px;text-align:center;margin-bottom:14px;}
+  .pdl{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--green);text-transform:uppercase;margin-bottom:7px;}
+  .pdv{font-family:'Space Mono',monospace;font-size:clamp(30px,7vw,48px);font-weight:700;color:var(--accent2);line-height:1;}
+  .pds{font-size:12px;color:var(--text2);margin-top:5px;}
+  .btn-save{width:100%;padding:17px;background:linear-gradient(135deg,#00d4ff,#00ff88);border:none;border-radius:12px;color:#0a0e17;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;margin-top:8px;}
+  .btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,255,0.3);}
+  .btn-r{width:100%;padding:11px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;margin-top:8px;}
+  .btn-r:hover{border-color:var(--text2);color:var(--text);}
+  .hs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .sb{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center;}
+  .sb .sl{font-size:11px;color:var(--text3);margin-bottom:4px;}
+  .sb .sv{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;}
+  .hc{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+  .tw{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--surface2);}
+  th{padding:11px 13px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;white-space:nowrap;}
+  td{padding:11px 13px;border-top:1px solid var(--border);white-space:nowrap;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .bge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'Space Mono',monospace;}
+  .bge.lucro{background:rgba(0,201,122,0.15);color:var(--green);border:1px solid rgba(0,201,122,0.3);}
+  .bge.prejuizo{background:rgba(255,61,90,0.15);color:var(--red);border:1px solid rgba(255,61,90,0.3);}
+  .bge.zero{background:rgba(255,179,71,0.15);color:var(--warn);border:1px solid rgba(255,179,71,0.3);}
+  .bd{background:transparent;border:1px solid rgba(255,61,90,0.3);color:var(--red);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;}
+  .bc{background:transparent;border:1px solid rgba(255,61,90,0.3);color:var(--red);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;}
+  .eh{text-align:center;padding:50px 20px;color:var(--text3);font-size:14px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:13px 22px;color:var(--accent2);font-family:'Space Mono',monospace;font-size:13px;z-index:1000;transition:transform 0.3s ease;white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  @media(max-width:600px){.result-grid{grid-template-columns:1fr;}.hs{grid-template-columns:1fr 1fr;}.fields-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="badge">ES OPTIONS — 0 DTE</div>
+    <h1>Gerenciador de Operações</h1>
+    <p>Registre, acompanhe e evolua seu operacional</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('operacao',this)">📊 Operação</button>
+    <button class="tab" onclick="showTab('checklist',this)">✅ Checklist</button>
+    <button class="tab" onclick="showTab('historico',this)">📋 Histórico</button>
+    <button class="tab" onclick="showTab('referencia',this)">📖 Referência</button>
+  </div>
+
+  <!-- OPERAÇÃO -->
+  <div id="tab-operacao" class="tab-content active">
+    <div class="card">
+      <div class="card-title">Tipo de trava</div>
+      <div class="fields-row" style="margin-bottom:12px">
+        <div class="field">
+          <label>Tipo de trava</label>
+          <select id="tipo-trava" onchange="calcular()">
+            <option value="call">Trava de baixa — CALL ⭐</option>
+            <option value="put">Trava de alta — PUT</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Contratos</label>
+          <input type="number" id="contratos" value="1" min="1" step="1" oninput="calcular()">
+          <div class="hint">US$ 250 de margem por contrato</div>
+        </div>
+      </div>
+      <div class="gr" id="skew-info">⭐ Call preferencial — o skew paga 50% a mais que a put no mesmo delta. Mercado sobe devagar, queda do prêmio é rápida.</div>
+      <div class="wr" id="put-warn" style="display:none">⚠️ PUT — distância mínima 50% maior que a call. O mercado cai rápido e rompe suportes com violência antes de reverter.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Passo 1 — Antes de entrar</div>
+      <div class="fields-row">
+        <div class="field">
+          <label>Capital na conta (US$)</label>
+          <input type="number" id="capital" value="250" min="250" step="50" oninput="calcular()">
+        </div>
+        <div class="field">
+          <label>MID recebido na entrada</label>
+          <input type="number" id="mid-entrada" value="120" min="1" step="1" oninput="calcular()">
+          <div class="hint">Número da coluna MID na plataforma</div>
+        </div>
+      </div>
+      <div class="ir"><span class="il">MID mínimo recomendado</span><span class="iv" id="mid-min">MID 100 ou mais</span></div>
+      <div class="ir"><span class="il">MID alvo de saída (50%)</span><span class="iv" id="mid-saida-sug">MID 60</span></div>
+      <div class="sr"><span class="il">🛑 Stop máximo desta operação</span><span class="iv" id="stop-max">US$ 100</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Passo 2 — Depois de sair</div>
+      <div class="field">
+        <label>MID pago para sair</label>
+        <input type="number" id="mid-saida" value="60" min="0" step="1" oninput="calcular()">
+        <div class="hint">Número da coluna MID ao fechar a posição</div>
+      </div>
+      <div class="result-grid">
+        <div class="result-box blue"><div class="rl">Resultado bruto</div><div class="rv" id="bruto">US$ 30</div></div>
+        <div class="result-box red"><div class="rl">Taxa Tasty Trader</div><div class="rv" id="taxa">-US$ 8,50</div></div>
+        <div class="result-box green"><div class="rl">Lucro líquido</div><div class="rv" id="liquido">US$ 21,50</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Passo 3 — Próxima operação</div>
+      <div class="ir"><span class="il">Novo saldo da conta</span><span class="iv" id="novo-saldo" style="color:var(--accent)">US$ 271,50</span></div>
+      <div class="sr"><span class="il">🛑 Stop máximo na próxima</span><span class="iv" id="prox-stop">US$ 100</span></div>
+      <div class="wr">💡 Saída: 50% de lucro OU pullback na MM20/VWAP — o que vier primeiro. Não espere os 50% a qualquer custo.</div>
+    </div>
+
+    <div class="pd">
+      <div class="pdl">💰 você ganhou até agora</div>
+      <div class="pdv" id="lucro-acumulado">US$ 0,00</div>
+      <div class="pds">Lucro líquido acumulado de todas as operações salvas</div>
+    </div>
+
+    <button class="btn-save" onclick="salvarOperacao()">✦ SALVAR ESTA OPERAÇÃO NO HISTÓRICO</button>
+    <button class="btn-r" onclick="limparCampos()">Limpar campos para nova operação</button>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div id="tab-checklist" class="tab-content">
+    <div class="card">
+      <div class="card-title">Checklist pré-operação 0 DTE</div>
+      <div class="wr" style="margin-bottom:16px">Filtros 1, 2 e 3 são obrigatórios. Um NÃO neles cancela a entrada.</div>
+
+      <div class="ci" onclick="toggleCheck(this)" data-req="true"><div class="cb"></div><div class="ct"><div class="ctt">1 — Calendário econômico verificado (Investing.com)</div><div class="cts">Noticias de 3 touros: horário gravado. Fecharei antes ou entrarei depois. Nunca opero no momento da notícia.</div></div></div>
+      <div class="ci" onclick="toggleCheck(this)" data-req="true"><div class="cb"></div><div class="ct"><div class="ctt">2 — GEX com wall clara na região da entrada</div><div class="cts">Call: strike 30+ pontos acima da wall. Put: strike 40+ pontos abaixo da wall. Sem GEX favorável — não entra.</div></div></div>
+      <div class="ci" onclick="toggleCheck(this)" data-req="true"><div class="cb"></div><div class="ct"><div class="ctt">3 — Mercado andou acima de 1% (preferência 1,5%+)</div><div class="cts">Abaixo de 0,80%: não entra. O mercado provavelmente vai chegar na sua trava.</div></div></div>
+      <div class="ci" onclick="toggleCheck(this)" data-req="false"><div class="cb"></div><div class="ct"><div class="ctt">4 — Preço afastado da MM20 e VWAP (confirmação)</div><div class="cts">Confirma que o movimento teve força real. Recomendado mas não obrigatório.</div></div></div>
+      <div class="ci" onclick="toggleCheck(this)" data-req="false"><div class="cb"></div><div class="ct"><div class="ctt">5 — Nível técnico confirmando a região</div><div class="cts">Topo, fundo ou POC próximo. Cuidado: big players usam esses níveis para falsos rompimentos.</div></div></div>
+      <div class="ci" onclick="toggleCheck(this)" data-req="false"><div class="cb"></div><div class="ct"><div class="ctt">6 — FinanceJuice aberto sem noticias geopolíticas ativas</div><div class="cts">Candle grande inesperado: verifique o site imediatamente antes de tomar qualquer decisão.</div></div></div>
+
+      <div class="cr partial" id="check-result" style="margin-top:14px">Marque os filtros para avaliar a entrada</div>
+      <button class="btn-r" onclick="resetChecklist()" style="margin-top:10px">Resetar checklist</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Regras de saída</div>
+      <div class="ci" style="cursor:default;border-color:rgba(0,201,122,0.4)"><div class="cb" style="background:var(--green);border-color:var(--green)">✓</div><div class="ct"><div class="ctt">Saída padrão — 50% de lucro</div><div class="cts">Monitore e saia quando atingir. Não deixe a Tasty fechar automaticamente.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(0,201,122,0.4)"><div class="cb" style="background:var(--green);border-color:var(--green)">✓</div><div class="ct"><div class="ctt">Saída por pullback — MM20 ou VWAP</div><div class="cts">Se tocar antes dos 50% — saia com o que tiver. Não espere ultrapassar as médias.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.4)"><div class="cb" style="background:var(--red);border-color:var(--red)">!</div><div class="ct"><div class="ctt">Stop — US$ 100 por contrato</div><div class="cts">Atingiu — fecha imediatamente. Avalie a operação de recuperação se mercado andou 2%+.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,179,71,0.4)"><div class="cb" style="background:var(--warn);border-color:var(--warn);color:#0a0e17">↩</div><div class="ct"><div class="ctt">Recuperação — apenas se mercado andou 2%+</div><div class="cts">Cenário A (volatilidade): segunda entrada MID alto, busca 50%. Cenário B (calmo): MM20 como saída com 30%.</div></div></div>
+      <div class="ci" style="cursor:default"><div class="cb" style="background:var(--text3);border-color:var(--text3)">—</div><div class="ct"><div class="ctt">Dia sem setup — não opera</div><div class="cts">Mercado lateral sem movimento de 1%. Não forçar. Não operar também é operar.</div></div></div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div id="tab-historico" class="tab-content">
+    <div class="hs">
+      <div class="sb"><div class="sl">Total</div><div class="sv" id="stat-total" style="color:var(--accent)">0</div></div>
+      <div class="sb"><div class="sl">Ganhos</div><div class="sv" id="stat-ganhos" style="color:var(--green)">0</div></div>
+      <div class="sb"><div class="sl">Perdas</div><div class="sv" id="stat-perdas" style="color:var(--red)">0</div></div>
+      <div class="sb"><div class="sl">% Acerto</div><div class="sv" id="stat-acerto" style="color:var(--warn)">0%</div></div>
+    </div>
+    <div class="hc">
+      <div style="font-size:13px;color:var(--text2)">Lucro total: <span id="stat-lucro-total" style="color:var(--green);font-weight:700;font-family:'Space Mono',monospace">US$ 0,00</span></div>
+      <button class="bc" onclick="limparHistorico()">Apagar histórico</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Data</th><th>Tipo</th><th>Contr.</th><th>MID In.</th><th>MID Saí.</th><th>Bruto</th><th>Líquido</th><th>Result.</th><th></th></tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+      <div id="hist-empty" class="eh"><div style="font-size:36px;opacity:0.3;margin-bottom:10px">📋</div><div>Nenhuma operação registrada</div><div style="font-size:12px;margin-top:4px">Preencha a aba Operação e clique em Salvar</div></div>
+    </div>
+  </div>
+
+  <!-- REFERÊNCIA -->
+  <div id="tab-referencia" class="tab-content">
+    <div class="card">
+      <div class="card-title">Hierarquia de filtros</div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.5)"><div class="cb" style="background:var(--red);border-color:var(--red);color:white;font-size:9px;font-weight:700">OBR</div><div class="ct"><div class="ctt">Filtro 1 — Calendário econômico (obrigatório)</div><div class="cts">3 touros: fechar antes ou entrar depois. Big players usam noticias para stopar o varejo e comprar barato.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.5)"><div class="cb" style="background:var(--red);border-color:var(--red);color:white;font-size:9px;font-weight:700">OBR</div><div class="ct"><div class="ctt">Filtro 2 — GEX com wall clara (obrigatório)</div><div class="cts">Call: 30+ pontos acima. Put: 40+ pontos abaixo. Sem GEX — não entra.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.5)"><div class="cb" style="background:var(--red);border-color:var(--red);color:white;font-size:9px;font-weight:700">OBR</div><div class="ct"><div class="ctt">Filtro 3 — Movimento 1%+ preferência 1,5% (obrigatório)</div><div class="cts">Abaixo de 0,80%: não entra. Acima de 1,5%: alta probabilidade.</div></div></div>
+      <div class="ci" style="cursor:default"><div class="cb" style="background:var(--warn);border-color:var(--warn);color:#0a0e17;font-size:9px;font-weight:700">REC</div><div class="ct"><div class="ctt">Filtro 4 — MM20 e VWAP afastados (confirmação)</div><div class="cts">Confirma força do movimento. Não obrigatório mas recomendado.</div></div></div>
+      <div class="ci" style="cursor:default"><div class="cb" style="background:var(--warn);border-color:var(--warn);color:#0a0e17;font-size:9px;font-weight:700">REC</div><div class="ct"><div class="ctt">Filtro 5 — Nível técnico (confirmação com cautela)</div><div class="cts">Nunca reduza a margem do GEX por causa de um nível técnico. Falsos rompimentos são frequentes.</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Skew e preferência de trava</div>
+      <div class="gr" style="margin-bottom:10px">⭐ Call sempre preferencial — o skew de volatilidade paga 50% a mais que a put no mesmo delta. O mercado sobe devagar e o prêmio da call colapsa rápido quando o mercado cai.</div>
+      <div class="wr">⚠️ Put: sempre 50% mais longe que a call equivalente. O mercado cai rápido, em cascata, e rompe suportes com violência antes de reverter. Maior disciplina necessária.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Delta de referência</div>
+      <div class="ci" style="cursor:default;border-color:rgba(0,201,122,0.4)"><div class="cb" style="background:var(--green);border-color:var(--green)">✓</div><div class="ct"><div class="ctt">Delta 0.10 a 0.12 — zona ideal de entrada</div><div class="cts">85% a 90% de probabilidade de sucesso.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,179,71,0.4)"><div class="cb" style="background:var(--warn);border-color:var(--warn);color:#0a0e17">!</div><div class="ct"><div class="ctt">Delta 0.13 a 0.15 — limite aceitável</div><div class="cts">Atenção redobrada nos outros filtros.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.4)"><div class="cb" style="background:var(--red);border-color:var(--red)">!</div><div class="ct"><div class="ctt">Delta 0.25 a 0.30 — rolar agora</div><div class="cts">Gamma acelerando. Role para +50 pontos e +5 dias coletando crédito.</div></div></div>
+      <div class="ci" style="cursor:default;border-color:rgba(255,61,90,0.6)"><div class="cb" style="background:#cc0000;border-color:#cc0000">✕</div><div class="ct"><div class="ctt">Delta acima de 0.30 — situação crítica</div><div class="cts">Já deveria ter rolado ou stopado.</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Regras de ouro</div>
+      <div style="display:grid;gap:8px">
+        <div class="sr"><span class="il">🛑 Stop por operação</span><span class="iv">US$ 100 por contrato</span></div>
+        <div class="ir"><span class="il">📅 Notícia 3 touros</span><span class="iv" style="color:var(--warn)">Fecha antes ou entra depois</span></div>
+        <div class="ir"><span class="il">📈 Tendência 2 dias seguidos</span><span class="iv" style="color:var(--red)">Não entra</span></div>
+        <div class="ir"><span class="il">🌍 Tensão geopolítica</span><span class="iv" style="color:var(--warn)">FinanceJuice sempre aberto</span></div>
+        <div class="ir"><span class="il">🔄 Recuperação</span><span class="iv" style="color:var(--accent2)">Só acima de 2% de movimento</span></div>
+        <div class="ir"><span class="il">⭐ Preferência</span><span class="iv" style="color:var(--green)">Sempre call sobre put</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let historico = JSON.parse(localStorage.getItem('op_0dte_v1') || '[]');
+
+function fmt(val) {
+  const abs = Math.abs(val);
+  const str = abs.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (val<0?'-':'')+'US$ '+str;
+}
+
+function showTab(name,btn) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='historico') renderHistorico();
+}
+
+function calcular() {
+  const tipo = document.getElementById('tipo-trava').value;
+  const cont = parseInt(document.getElementById('contratos').value)||1;
+  const midEnt = parseFloat(document.getElementById('mid-entrada').value)||0;
+  const midSai = parseFloat(document.getElementById('mid-saida').value)||0;
+  const cap = parseFloat(document.getElementById('capital').value)||250;
+
+  document.getElementById('skew-info').style.display = tipo==='call'?'block':'none';
+  document.getElementById('put-warn').style.display = tipo==='put'?'block':'none';
+
+  const midSaiSug = Math.round(midEnt*0.5);
+  document.getElementById('mid-min').textContent = 'MID 100 ou mais';
+  document.getElementById('mid-saida-sug').textContent = 'MID '+midSaiSug;
+  document.getElementById('stop-max').textContent = fmt(cont*100);
+  document.getElementById('prox-stop').textContent = fmt(cont*100);
+
+  const bruto = (midEnt-midSai)*0.5*cont;
+  const taxa = -8.5*cont;
+  const liquido = bruto+taxa;
+
+  document.getElementById('bruto').textContent = fmt(bruto);
+  document.getElementById('taxa').textContent = fmt(taxa);
+  document.getElementById('liquido').textContent = fmt(liquido);
+
+  const el = document.getElementById('liquido').parentElement;
+  el.className = 'result-box '+(liquido>0?'green':liquido<0?'red':'blue');
+
+  document.getElementById('novo-saldo').textContent = fmt(cap+liquido);
+  atualizarAcumulado();
+}
+
+function atualizarAcumulado() {
+  const total = historico.reduce((s,op)=>s+(op.liquido||0),0);
+  document.getElementById('lucro-acumulado').textContent = fmt(total);
+  document.getElementById('lucro-acumulado').style.color = total>=0?'var(--accent2)':'var(--red)';
+}
+
+function salvarOperacao() {
+  const tipo = document.getElementById('tipo-trava').value;
+  const cont = parseInt(document.getElementById('contratos').value)||1;
+  const midEnt = parseFloat(document.getElementById('mid-entrada').value);
+  const midSai = parseFloat(document.getElementById('mid-saida').value);
+  if(!midEnt||midEnt<=0){showToast('⚠️ Preencha o MID de entrada!');return;}
+  if(isNaN(midSai)||midSai<0){showToast('⚠️ Preencha o MID de saída!');return;}
+  const bruto=(midEnt-midSai)*0.5*cont;
+  const taxa=-8.5*cont;
+  const liquido=bruto+taxa;
+  const op={id:Date.now(),data:new Date().toLocaleDateString('pt-BR'),tipo:tipo==='call'?'⬇ Call':'⬆ Put',contratos:cont,midEntrada:midEnt,midSaida:midSai,bruto,taxa,liquido,resultado:liquido>0?'lucro':liquido<0?'prejuizo':'zero'};
+  historico.unshift(op);
+  localStorage.setItem('op_0dte_v1',JSON.stringify(historico));
+  renderHistorico();atualizarAcumulado();limparCampos();
+  showToast('✦ Salvo! '+fmt(liquido));
+}
+
+function limparCampos() {
+  document.getElementById('mid-entrada').value='';
+  document.getElementById('mid-saida').value='';
+  calcular();
+}
+
+function deletarOp(id) {
+  historico=historico.filter(op=>op.id!==id);
+  localStorage.setItem('op_0dte_v1',JSON.stringify(historico));
+  renderHistorico();atualizarAcumulado();
+}
+
+function limparHistorico() {
+  if(!confirm('Apagar todo o histórico?'))return;
+  historico=[];localStorage.setItem('op_0dte_v1',JSON.stringify(historico));
+  renderHistorico();atualizarAcumulado();
+}
+
+function renderHistorico() {
+  const tbody=document.getElementById('hist-body');
+  const empty=document.getElementById('hist-empty');
+  const ganhos=historico.filter(o=>o.resultado==='lucro').length;
+  const perdas=historico.filter(o=>o.resultado==='prejuizo').length;
+  const total=historico.reduce((s,o)=>s+o.liquido,0);
+  document.getElementById('stat-total').textContent=historico.length;
+  document.getElementById('stat-ganhos').textContent=ganhos;
+  document.getElementById('stat-perdas').textContent=perdas;
+  document.getElementById('stat-acerto').textContent=historico.length>0?Math.round(ganhos/historico.length*100)+'%':'0%';
+  document.getElementById('stat-lucro-total').textContent=fmt(total);
+  document.getElementById('stat-lucro-total').style.color=total>=0?'var(--green)':'var(--red)';
+  if(historico.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=historico.map(op=>`<tr>
+    <td style="color:var(--text2)">${op.data}</td>
+    <td style="font-size:12px">${op.tipo}</td>
+    <td style="color:var(--accent);font-weight:700;font-family:'Space Mono',monospace">${op.contratos}</td>
+    <td style="font-family:'Space Mono',monospace">${op.midEntrada}</td>
+    <td style="font-family:'Space Mono',monospace">${op.midSaida}</td>
+    <td style="font-family:'Space Mono',monospace;color:var(--text2)">${fmt(op.bruto)}</td>
+    <td style="font-family:'Space Mono',monospace;font-weight:700;color:${op.liquido>0?'var(--green)':op.liquido<0?'var(--red)':'var(--warn)'}">${fmt(op.liquido)}</td>
+    <td><span class="bge ${op.resultado}">${op.resultado.toUpperCase()}</span></td>
+    <td><button class="bd" onclick="deletarOp(${op.id})">×</button></td>
+  </tr>`).join('');
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  el.querySelector('.cb').textContent = el.classList.contains('checked')?'✓':'';
+  avaliarChecklist();
+}
+
+function avaliarChecklist() {
+  const req=[...document.querySelectorAll('.ci[data-req="true"]')];
+  const reqOk=req.filter(i=>i.classList.contains('checked')).length;
+  const res=document.getElementById('check-result');
+  if(reqOk===req.length){res.className='cr ok';res.textContent='✦ Filtros obrigatórios OK — entrada liberada';}
+  else if(reqOk>0){res.className='cr partial';res.textContent='⚠ '+reqOk+'/'+req.length+' obrigatórios — não entra ainda';}
+  else{res.className='cr nok';res.textContent='Marque os filtros para avaliar a entrada';}
+}
+
+function resetChecklist() {
+  document.querySelectorAll('.ci[data-req]').forEach(i=>{i.classList.remove('checked');i.querySelector('.cb').textContent='';});
+  avaliarChecklist();
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+calcular();renderHistorico();
+</script>
+</body>
+</html>
